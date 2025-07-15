@@ -1,0 +1,27 @@
+
+to HOST the FILE of Laravel
+hosting the laravel using cmd and terminal "php artisan serve"
+
+IF The Homepage is not working 
+Like This "500 Server Error"
+Go to Cmd or Terminal
+type = cp .env.example .env
+
+then how to generate the key
+type to cmd or terminal = "php artisan key:generate"
+
+Then host it using this
+Type that on CMD Or Terminal = "php artisan serve"
+
+
+Connect database
+Open your php.ini file (usually found at C:\xampp\php\php.ini).
+Search for these lines:
+;extension=mysqli
+;extension=pdo_mysql
+Remove the semicolon (;) at the start of both lines to enable them:
+extension=mysqli
+extension=pdo_mysql
+Save the php.ini file.
+Restart Apache from the XAMPP Control Panel.
+Run php artisan migrate again in your terminal.
