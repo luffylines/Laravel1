@@ -3,6 +3,8 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\PHPMailerControler;
 use Illuminate\Support\Facades\Auth;
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\AdminController;
 
 // Home route
 Route::get('/', function () {
@@ -38,3 +40,23 @@ Route::get('/users', [PHPMailerControler::class, 'showUsers'])->name('userslist'
 Auth::routes();
 
 Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
+
+// Edit Profile route
+Route::middleware(['auth'])->group(function () {
+    Route::get('/profile/settings', [ProfileController::class, 'settings'])->name('profile.settings');
+    Route::put('/profile/update', [ProfileController::class, 'update'])->name('profile.update');
+    Route::delete('/profile/delete', [ProfileController::class, 'delete'])->name('profile.delete');
+});
+//Route::get('/profile/settings', [ProfileController::class, 'settings'])->name('profile.settings')->middleware('auth');
+//Route::put('/profile/update', [ProfileController::class, 'update'])->name('profile.update')->middleware('auth');
+//Route::delete('/profile/delete', [ProfileController::class, 'delete'])->name('profile.delete')->middleware('auth');
+
+// Admin routes
+Route::middleware(['is_admin'])->group(function () {
+    Route::get('/admin/users', [AdminController::class, 'index'])->name('admin.users.index');
+    Route::get('/admin/users/create', [AdminController::class, 'create'])->name('admin.users.create');
+    Route::post('/admin/users', [AdminController::class, 'store'])->name('admin.users.store');
+    Route::get('/admin/users/{user}/edit', [AdminController::class, 'edit'])->name('admin.users.edit');
+    Route::put('/admin/users/{user}', [AdminController::class, 'update'])->name('admin.users.update');
+    Route::delete('/admin/users/{user}', [AdminController::class, 'destroy'])->name('admin.users.destroy');
+});

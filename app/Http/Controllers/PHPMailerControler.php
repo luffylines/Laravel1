@@ -21,7 +21,8 @@ class PHPMailerControler extends Controller
     public function postcontact(Request $request)
 {
     $validated = $request->validate([
-        'name' => 'required|string|max:255',
+        'firstname' => 'required|string|max:255',
+        'lastname' => 'required|string|max:255',
         'email' => 'required|email|max:255',
         'message' => 'required|string',
     ]);
@@ -91,14 +92,16 @@ class PHPMailerControler extends Controller
     public function postsignup(Request $request)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
+            'firstname' => 'required|string|max:255',
+            'lastname' => 'required|string|max:255',
             'email' => 'required|email|max:255|unique:users',
             'password' => 'required|string|min:8|confirmed',
         ]);
 
         try {
             $user = User::create([
-                'name' => $validated['name'],
+                'firstname' => $validated['firstname'],
+                'lastname' => $validated['lastname'],
                 'email' => $validated['email'],
                 'password' => Hash::make($validated['password']), // ✅ Secured password hashing
                 'remember_token' => Str::random(60),
@@ -143,10 +146,10 @@ class PHPMailerControler extends Controller
                         <img src='cid:logo_image' alt='Logo' width='150' />
                         <h2>Signup Confirmation</h2>
                     </div>
-                    <p>Hello <strong>{$validated['name']}</strong>,</p>
+                    <p>Hello <strong>{$validated['firstname']}</strong>,</p>
                     <p>Your account has been successfully created with the following details:</p>
                     <ul>
-                        <li><strong>Name:</strong> {$validated['name']}</li>
+                        <li><strong>Name:</strong> {$validated['firstname']},{$validated['lastname']}</li>
                         <li><strong>Email:</strong> {$validated['email']}</li>
                     </ul>
                     <p>Thank you for signing up!</p>
