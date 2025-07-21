@@ -14,33 +14,38 @@
     {{-- Tab Navigation --}}
     <ul class="nav nav-tabs" id="accountSettingsTabs" role="tablist">
         <li class="accordion-item" role="presentation">
-            <button class="nav-link active" id="display-mode-tab" data-bs-toggle="tab" data-bs-target="#display-mode" type="button" role="tab" aria-controls="display-mode" aria-selected="true">
+            <button class="nav-link {{ session('activeTab') === 'display-mode' ? 'active' : '' }}" id="display-mode-tab" data-bs-toggle="tab" data-bs-target="#display-mode" type="button" role="tab" aria-controls="display-mode" aria-selected="true">
                 {{ __('Display Mode') }}
             </button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link" id="changenametab" data-bs-toggle="tab" data-bs-target="#changename" type="button" role="tab" aria-controls="changename" aria-selected="false">
+            <button class="nav-link {{ session('activeTab') === 'changename' ? 'active' : '' }}" id="changenametab" data-bs-toggle="tab" data-bs-target="#changename" type="button" role="tab" aria-controls="changename" aria-selected="false">
                 {{ __('Change Name') }}
             </button>
         </li>
          <li class="nav-item" role="presentation">
-            <button class="nav-link" id="changeemailtab" data-bs-toggle="tab" data-bs-target="#changeemail" type="button" role="tab" aria-controls="changeemail" aria-selected="false">
+            <button class="nav-link {{ session('activeTab') === 'changeemail' ? 'active' : '' }}" id="changeemailtab" data-bs-toggle="tab" data-bs-target="#changeemail" type="button" role="tab" aria-controls="changeemail" aria-selected="false">
                 {{ __('Change Email') }}
             </button>
         </li>
          <li class="nav-item" role="presentation">
-            <button class="nav-link" id="changepasstab" data-bs-toggle="tab" data-bs-target="#changepassinfo" type="button" role="tab" aria-controls="changepass" aria-selected="false">
+            <button class="nav-link {{ session('activeTab') === 'changepass' ? 'active' : '' }}" id="changepasstab" data-bs-toggle="tab" data-bs-target="#changepassinfo" type="button" role="tab" aria-controls="changepass" aria-selected="false">
                 {{ __('Change Password') }}
             </button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link" id="country-tab" data-bs-toggle="tab" data-bs-target="#country" type="button" role="tab" aria-controls="country" aria-selected="false">
+            <button class="nav-link {{ session('activeTab') === 'country' ? 'active' : '' }}" id="country-tab" data-bs-toggle="tab" data-bs-target="#country" type="button" role="tab" aria-controls="country" aria-selected="false">
                 {{ __('Country') }}
             </button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link" id="timezone-tab" data-bs-toggle="tab" data-bs-target="#timezone" type="button" role="tab" aria-controls="timezone" aria-selected="false">
+            <button class="nav-link {{ session('activeTab') === 'timezone' ? 'active' : '' }}" id="timezone-tab" data-bs-toggle="tab" data-bs-target="#timezone" type="button" role="tab" aria-controls="timezone" aria-selected="false">
                 {{ __('Timezone') }}
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link {{ session('activeTab') === 'two-factor' ? 'active' : '' }}" id="two-factor-tab" data-bs-toggle="tab" data-bs-target="#two-factor" type="button" role="tab" aria-controls="two-factor" aria-selected="false">
+                {{ __('Two-Factor Authentication') }}
             </button>
         </li>
         <li class="nav-item" role="presentation">
@@ -53,7 +58,7 @@
     {{-- Tab Content --}}
     <div class="tab-content mt-4" id="accountSettingsTabsContent">
         {{-- Display Mode Tab --}}
-        <div class="tab-pane fade show active" id="display-mode" role="tabpanel" aria-labelledby="display-mode-tab">
+        <div class="tab-pane fade {{ session('activeTab') === 'display-mode' ? 'show active' : '' }}" id="display-mode" role="tabpanel" aria-labelledby="display-mode-tab">
             <form method="POST" action="{{ route('profile.update') }}">
                 @csrf
                 @method('PUT')
@@ -68,7 +73,7 @@
             </form>
         </div>
         {{-- Change Name Tab --}}
-        <div class="tab-pane fade" id="changename" role="tabpanel" aria-labelledby="changename-tab">
+        <div class="tab-pane fade {{ session('activeTab') === 'changename' ? 'show active' : '' }}" id="changename" role="tabpanel" aria-labelledby="changename-tab">
             <form method="POST" action="{{ route('profile.update') }}">
                 @csrf
                 @method('PUT')
@@ -84,7 +89,7 @@
             </form>
         </div>
         {{-- Change Email Tab --}}
-        <div class="tab-pane fade" id="changeemail" role="tabpanel" aria-labelledby="changeemail-tab">
+        <div class="tab-pane fade {{ session('activeTab') === 'changeemail' ? 'show active' : '' }}" id="changeemail" role="tabpanel" aria-labelledby="changeemail-tab">
             <form method="POST" action="{{ route('profile.update') }}">
                 @csrf
                 @method('PUT')
@@ -96,7 +101,7 @@
             </form>
         </div>
         {{-- Change Password Tab --}}
-        <div class="tab-pane fade" id="changepassinfo" role="tabpanel" aria-labelledby="changepass-tab">
+        <div class="tab-pane fade {{ session('activeTab') === 'changepassinfo' ? 'show active' : '' }}" id="changepassinfo" role="tabpanel" aria-labelledby="changepass-tab">
             <form method="POST" action="{{ route('profile.update') }}">
                 @csrf
                 @method('PUT')
@@ -110,9 +115,38 @@
                 </div>
                 <button type="submit" class="btn btn-primary">{{ __('Change Password') }}</button>
             </form>
-        </div> 
+        </div>
+                {{-- Two-Factor Authentication Tab --}}
+        <div class="tab-pane fade {{ session('activeTab') === 'two-factor' ? 'show active' : '' }}" id="two-factor" role="tabpanel" aria-labelledby="two-factor-tab">
+            <form method="POST" action="{{ route('profile.update') }}">
+                @csrf
+                @method('PUT')
+                <div class="mb-3">
+                    <label for="two_factor" class="form-label">{{ __('Enable Two-Factor Authentication') }}</label>
+                    <select id="two_factor" name="two_factor" class="form-control" onchange="toggleTwoFactorSetup(this.value)">
+                        <option value="on" {{ Auth::user()->google2fa_secret ? 'selected' : '' }}>{{ __('On') }}</option>
+                        <option value="off" {{ !Auth::user()->google2fa_secret ? 'selected' : '' }}>{{ __('Off') }}</option>
+                    </select>
+                </div>
+                @if (Auth::user()->google2fa_secret)
+                    <p class="text-success">{{ __('Two-Factor Authentication is currently enabled.') }}</p>
+                @else
+                    <p class="text-danger">{{ __('Two-Factor Authentication is currently disabled.') }}</p>
+                @endif
+                <button type="submit" class="btn btn-primary">{{ __('Update Two-Factor Authentication') }}</button>
+            </form>
+        </div>
+        {{-- Two-Factor Disable Tab --}}
+        <div class="tab-pane fade {{ session('activeTab') === 'two-factor-disable' ? 'show active' : '' }}" id="two-factor-disable" role="tabpanel" aria-labelledby="two-factor-disable-tab">
+            <form method="POST" action="{{ route('2fa.disable') }}">
+                @csrf
+                <input type="hidden" name="activeTab" value="two-factor-disable">
+                <p class="text-danger">{{ __('Warning: Disabling Two-Factor Authentication will remove an extra layer of security from your account.') }}</p>
+                <button type="submit" class="btn btn-danger">{{ __('Disable Two-Factor Authentication') }}</button>
+            </form>
+        </div>
         {{-- Country Tab --}}
-        <div class="tab-pane fade" id="country" role="tabpanel" aria-labelledby="country-tab">
+        <div class="tab-pane fade {{ session('activeTab') === 'country' ? 'show active' : '' }}" id="country" role="tabpanel" aria-labelledby="country-tab">
             <form method="POST" action="{{ route('profile.update') }}">
                 @csrf
                 @method('PUT')
@@ -131,7 +165,7 @@
             </form>
         </div>
         {{-- Timezone Tab --}}
-                <div class="tab-pane fade" id="timezone" role="tabpanel" aria-labelledby="timezone-tab">
+                <div class="tab-pane fade {{ session('activeTab') === 'timezone' ? 'show active' : '' }}" id="timezone" role="tabpanel" aria-labelledby="timezone-tab">
             <form method="POST" action="{{ route('profile.update') }}">
                 @csrf
                 @method('PUT')
@@ -149,9 +183,8 @@
                 <button type="submit" class="btn btn-primary">{{ __('Change Timezone') }}</button>
             </form>
         </div>
-
         {{-- Delete Account Tab --}}
-        <div class="tab-pane fade" id="delete-account" role="tabpanel" aria-labelledby="delete-account-tab">
+        <div class="tab-pane fade {{ session('activeTab') === 'delete-account' ? 'show active' : '' }}" id="delete-account" role="tabpanel" aria-labelledby="delete-account-tab">
             <form id="delete-account-form" method="POST" action="{{ route('profile.delete') }}">
                 @csrf
                 @method('DELETE')
@@ -161,4 +194,24 @@
         </div>
     </div>
 </div>
+<script>
+    function toggleTwoFactorSetup(value) {
+        const setupTab = document.getElementById('two-factor-setup');
+        const verifyTab = document.getElementById('two-factor-verify');
+        const disableTab = document.getElementById('two-factor-disable');
+        const updateButton = document.querySelector('#two-factor button[type="submit"]'); // Update button
+
+        if (value === 'on') {
+            setupTab.classList.add('show', 'active');
+            verifyTab.classList.remove('show', 'active');
+            disableTab.classList.remove('show', 'active');
+            updateButton.style.display = 'block'; // Show the Update button
+        } else if (value === 'off') {
+            setupTab.classList.remove('show', 'active');
+            verifyTab.classList.remove('show', 'active');
+            disableTab.classList.add('show', 'active');
+            updateButton.style.display = 'none'; // Hide the Update button
+        }
+    }
+</script>
 @endsection

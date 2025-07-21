@@ -20,8 +20,8 @@
             <input type="email" id="email" name="email" class="form-control" value="{{ $user->email }}" required>
         </div>
         <div class="mb-3">
-            <label for="password" class="form-label">New Password</label>
-            <input type="password" id="password" name="password" class="form-control">
+            <label for="email" class="form-label">{{ __('Email Address') }}</label>
+            <input type="email" id="email" name="email" class="form-control" value="{{ Crypt::decryptString($user->email) }}" required>
         </div>
         <div class="mb-3">
             <label for="password_confirmation" class="form-label">Confirm Password</label>

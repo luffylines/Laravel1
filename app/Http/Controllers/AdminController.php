@@ -4,12 +4,20 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Crypt;
 
 class AdminController extends Controller
 {
+        public function dashboard()
+    {
+        return view('admin.dashboard'); // Point to the admin dashboard view
+    }
     public function index()
     {
-        $users = User::all();
+        $users = User::all()->map(function ($user) {
+            $user->email = Crypt::decryptString($user->email); // Decrypt email for display
+            return $user;
+        });
         return view('admin.users.index', compact('users'));
     }
 
@@ -30,7 +38,7 @@ class AdminController extends Controller
         User::create([
             'firstname' => $request->firstname,
             'lastname' => $request->lastname,
-            'email' => $request->email,
+            'email' => Crypt::encryptString($request->email), // Encrypt email
             'password' => Hash::make($request->password),
         ]);
 
@@ -39,6 +47,7 @@ class AdminController extends Controller
 
     public function edit(User $user)
     {
+        $user->email = Crypt::decryptString($user->email); // Decrypt email before passing to the view
         return view('admin.users.edit', compact('user'));
     }
 

@@ -5,6 +5,7 @@ use App\Http\Controllers\PHPMailerControler;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\TwoFactorController;
 
 // Home route
 Route::get('/', function () {
@@ -42,7 +43,7 @@ Auth::routes();
 Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
 
 // Edit Profile route
-Route::middleware(['auth'])->group(function () {
+Route::middleware(['auth', 'throttle:10,1'])->group(function () {
     Route::get('/profile/settings', [ProfileController::class, 'settings'])->name('profile.settings');
     Route::put('/profile/update', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile/delete', [ProfileController::class, 'delete'])->name('profile.delete');
@@ -50,13 +51,20 @@ Route::middleware(['auth'])->group(function () {
 //Route::get('/profile/settings', [ProfileController::class, 'settings'])->name('profile.settings')->middleware('auth');
 //Route::put('/profile/update', [ProfileController::class, 'update'])->name('profile.update')->middleware('auth');
 //Route::delete('/profile/delete', [ProfileController::class, 'delete'])->name('profile.delete')->middleware('auth');
-
-// Admin routes
-Route::middleware(['is_admin'])->group(function () {
+//admin middleware
+Route::middleware(['auth', 'is_admin'])->group(function () {
+    Route::get('/admin/dashboard', [AdminController::class, 'dashboard'])->name('admin.dashboard');
     Route::get('/admin/users', [AdminController::class, 'index'])->name('admin.users.index');
     Route::get('/admin/users/create', [AdminController::class, 'create'])->name('admin.users.create');
     Route::post('/admin/users', [AdminController::class, 'store'])->name('admin.users.store');
     Route::get('/admin/users/{user}/edit', [AdminController::class, 'edit'])->name('admin.users.edit');
     Route::put('/admin/users/{user}', [AdminController::class, 'update'])->name('admin.users.update');
     Route::delete('/admin/users/{user}', [AdminController::class, 'destroy'])->name('admin.users.destroy');
+});
+
+// Two-Factor Authentication routes
+Route::middleware(['auth'])->group(function () {
+    Route::get('/2fa/setup', [TwoFactorController::class, 'setup'])->name('2fa.setup');
+    Route::post('/2fa/verify', [TwoFactorController::class, 'verify'])->name('2fa.verify');
+    Route::post('/2fa/disable', [TwoFactorController::class, 'disable'])->name('2fa.disable');
 });

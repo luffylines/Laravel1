@@ -19,7 +19,7 @@
                 <tr>
                     <td>{{ $user->firstname }}</td>
                     <td>{{ $user->lastname }}</td>
-                    <td>{{ $user->email }}</td>
+                    <td>{{ Crypt::decryptString($user->email) }}</td>
                     <td>
                         <a href="{{ route('admin.users.edit', $user->id) }}" class="btn btn-warning btn-sm">Edit</a>
                         <form method="POST" action="{{ route('admin.users.destroy', $user->id) }}" style="display:inline;">

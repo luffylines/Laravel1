@@ -18,9 +18,12 @@ class User extends Authenticatable implements MustVerifyEmail
      * @var list<string>
      */
     protected $fillable = [
-        'name',
+        'firstname',
+        'lastname',
         'email',
         'password',
+        'is_admin', // Assuming 'is_admin' is a boolean field to check admin status
+        'google2fa_secret', // Add this field for storing the 2FA secret
         'remember_token',
     ];
 
@@ -45,5 +48,10 @@ class User extends Authenticatable implements MustVerifyEmail
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+    // Define the isAdmin method
+    public function isAdmin()
+    {
+        return $this->is_admin === 1; // Assuming `is_admin` is a column in your `users` table
     }
 }

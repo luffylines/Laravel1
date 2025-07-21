@@ -5,6 +5,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
+use PragmaRX\Google2FALaravel\Google2FA;
 
 class ProfileController extends Controller
 {
@@ -48,14 +49,38 @@ class ProfileController extends Controller
 
     return view('profile.account_settings', compact('countries', 'timezones'));
 }
+
+
    public function update(Request $request)
 {
-    $user = User::find(Auth::id());
+    session()->flash('activeTab', $request->input('activeTab', 'two-factor'));
 
+    $user = User::find(Auth::id());
+    
     if (!$user) {
         return redirect()->route('profile.settings')->with('error', 'User not found.');
     }
+    // 2FA check
+    if ($request->has('two_factor')) {
+        if ($request->two_factor === 'on') {
+            $google2fa = app('pragmarx.google2fa');
 
+            // Generate secret key if not already set
+            if (!$user->google2fa_secret) {
+                $user->google2fa_secret = $google2fa->generateSecretKey();
+                $user->save();
+            }
+
+            // Redirect to the setup page
+            return redirect()->route('2fa.setup')->with('success', 'Two-Factor Authentication enabled successfully.');
+        } elseif ($request->two_factor === 'off') {
+            $user->google2fa_secret = null;
+            $user->save();
+
+            return redirect()->route('profile.settings')->with('success', 'Two-Factor Authentication disabled successfully.');
+        }
+    }
+        
     // Check what is being updated
     if ($request->has('display_mode')) {
         $request->validate([

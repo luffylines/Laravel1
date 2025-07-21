@@ -16,5 +16,6 @@ class Kernel extends HttpKernel
         // Other middleware...
         'is_admin' => \App\Http\Middleware\IsAdmin::class,
         'set_timezone' => \App\Http\Middleware\SetUserTimezone::class,
+        '2fa' => \App\Http\Middleware\TwoFactorMiddleware::class,
     ];
 }

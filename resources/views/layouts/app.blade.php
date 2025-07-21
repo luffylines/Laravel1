@@ -73,6 +73,20 @@
                                 </li>
                             @endif
                         @else
+                            <li class="nav-item">
+                                <a class="nav-link" href="{{ route('home') }}">{{ __('Home') }}</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{{ route('about') }}">{{ __('About') }}</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{{ route('contact') }}">{{ __('Contact Us') }}</a>
+                            </li>
+                            @if (Auth::user()->isAdmin())
+                                <li class="nav-item">
+                                    <a class="nav-link" href="{{ route('admin.dashboard') }}">{{ __('Admin Dashboard') }}</a>
+                                </li>
+                            @endif
                             <li class="nav-item dropdown">
                                 <a id="navbarDropdown" class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" v-pre>
                                     {{ Auth::user()->firstname . ' ' . Auth::user()->lastname }}
@@ -82,6 +96,9 @@
                                         <a class="dropdown-item" href="{{ route('profile.settings') }}">
                                             {{ __('Account Settings') }}
                                         </a>
+                                         {{--<a class="dropdown-item" href="{{ route('help') }}">
+                                            {{ __('Help & Support') }}
+                                        </a> --}}
                                         <a class="dropdown-item" href="{{ route('logout') }}"
                                        onclick="event.preventDefault();
                                                      document.getElementById('logout-form').submit();">
