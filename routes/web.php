@@ -62,9 +62,25 @@ Route::middleware(['auth', 'is_admin'])->group(function () {
     Route::delete('/admin/users/{user}', [AdminController::class, 'destroy'])->name('admin.users.destroy');
 });
 
+    
 // Two-Factor Authentication routes
 Route::middleware(['auth'])->group(function () {
-    Route::get('/2fa/setup', [TwoFactorController::class, 'setup'])->name('2fa.setup');
-    Route::post('/2fa/verify', [TwoFactorController::class, 'verify'])->name('2fa.verify');
-    Route::post('/2fa/disable', [TwoFactorController::class, 'disable'])->name('2fa.disable');
-});
+    Route::get('/2fa/setup/setup', [TwoFactorController::class, 'setup'])->name('2fa.setup');
+    Route::post('/2fa/setup/verify', [TwoFactorController::class, 'verify'])->name('2fa.verify.setup');
+    Route::post('/2fa/setup/disable', [TwoFactorController::class, 'disable'])->name('2fa.disable'); 
+   // Gmail send to User
+    Route::post('/gmail/send', [TwoFactorController::class, 'sendGmailOtp'])->name('gmail.send');
+    // Gmail OTP routes
+    Route::get('/gmail/verify', [TwoFactorController::class, 'showGmailVerifyForm'])->name('gmail.verify');
+   // Route for Gmail OTP verification logic
+    Route::post('/gmail/verify', [TwoFactorController::class, 'verifyGmailOtp'])->name('gmail.verify.post');
+    // Forgot OTP route
+    Route::post('/2fa/setup/forgot', [TwoFactorController::class, 'disable'])->name('2fa.forgot');
+}); 
+
+// Route for verifying the 2FA login
+Route::post('/2fa/login/verify', [TwoFactorController::class, 'verifyLogin'])->name('2fa.verify.login')->middleware('auth');
+// Route for showing the 2FA verification form
+Route::get('/2fa/login/verify', [TwoFactorController::class, 'showVerifyForm'])->name('2fa.verify.form')->middleware('auth');
+// Route for disabling 2FA
+Route::post('/2fa/login/disable', [TwoFactorController::class, 'disable'])->name('2fa.disable')->middleware('auth');

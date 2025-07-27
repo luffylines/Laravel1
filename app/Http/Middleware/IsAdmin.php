@@ -20,6 +20,6 @@ public function handle($request, Closure $next)
         return $next($request);
     }
 
-    return redirect('/'); // Redirect non-admin users
-}
+   return redirect('/dashboard')->withErrors(['error' => 'You do not have admin access.']);
+    }
 }

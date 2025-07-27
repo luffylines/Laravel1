@@ -5,9 +5,28 @@
 <div class="container">
     <h1 class="text-center mb-4">{{ __('Account Settings') }}</h1>
 
+    {{-- Success Message --}}
     @if (session('success'))
-        <div class="alert alert-success">
+        <div class="alert alert-success" id="success-message">
             {{ session('success') }}
+        </div>
+    @endif
+
+    {{-- Error Message --}}
+    @if (session('error'))
+        <div class="alert alert-danger" id="error-message">
+            {{ session('error') }}
+        </div>
+    @endif
+    
+    {{-- Validation Errors --}}
+    @if ($errors->any())
+        <div class="alert alert-danger" id="validation-error">
+            <ul>
+                @foreach ($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
         </div>
     @endif
 
@@ -213,5 +232,15 @@
             updateButton.style.display = 'none'; // Hide the Update button
         }
     }
+        // Automatically hide success and error messages after 3 seconds
+    setTimeout(() => {
+        const successMessage = document.getElementById('success-message');
+        const errorMessage = document.getElementById('error-message');
+        const validationError = document.getElementById('validation-error');
+
+        if (successMessage) successMessage.style.display = 'none';
+        if (errorMessage) errorMessage.style.display = 'none';
+        if (validationError) validationError.style.display = 'none';
+    }, 3000);
 </script>
 @endsection

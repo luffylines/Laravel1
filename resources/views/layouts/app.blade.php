@@ -82,11 +82,6 @@
                             <li class="nav-item">
                                 <a class="nav-link" href="{{ route('contact') }}">{{ __('Contact Us') }}</a>
                             </li>
-                            @if (Auth::user()->isAdmin())
-                                <li class="nav-item">
-                                    <a class="nav-link" href="{{ route('admin.dashboard') }}">{{ __('Admin Dashboard') }}</a>
-                                </li>
-                            @endif
                             <li class="nav-item dropdown">
                                 <a id="navbarDropdown" class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" v-pre>
                                     {{ Auth::user()->firstname . ' ' . Auth::user()->lastname }}
