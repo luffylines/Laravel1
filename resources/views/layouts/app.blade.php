@@ -77,6 +77,17 @@
                                 <a class="nav-link" href="{{ route('home') }}">{{ __('Home') }}</a>
                             </li>
                             <li class="nav-item">
+                                <a class="nav-link" href="{{ route('rooms.index') }}">{{ __('Rooms') }}</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{{ route('bookings.my-bookings') }}">{{ __('My Bookings') }}</a>
+                            </li>
+                            @if(Auth::user()->is_admin)
+                            <li class="nav-item">
+                                <a class="nav-link" href="{{ route('admin.dashboard') }}" style="color: #3b82f6; font-weight: 600;">{{ __('Admin Panel') }}</a>
+                            </li>
+                            @endif
+                            <li class="nav-item">
                                 <a class="nav-link" href="{{ route('about') }}">{{ __('About') }}</a>
                             </li>
                             <li class="nav-item">
@@ -91,6 +102,23 @@
                                         <a class="dropdown-item" href="{{ route('profile.settings') }}">
                                             {{ __('Account Settings') }}
                                         </a>
+                                        @if(Auth::user()->is_admin)
+                                        <div class="dropdown-divider"></div>
+                                        <h6 class="dropdown-header">Admin Panel</h6>
+                                        <a class="dropdown-item" href="{{ route('admin.dashboard') }}">
+                                            <i class="fas fa-tachometer-alt me-2"></i>{{ __('Dashboard') }}
+                                        </a>
+                                        <a class="dropdown-item" href="{{ route('admin.users.index') }}">
+                                            <i class="fas fa-users me-2"></i>{{ __('Manage Users') }}
+                                        </a>
+                                        <a class="dropdown-item" href="{{ route('admin.rooms.index') }}">
+                                            <i class="fas fa-home me-2"></i>{{ __('Manage Rooms') }}
+                                        </a>
+                                        <a class="dropdown-item" href="{{ route('admin.payments.index') }}">
+                                            <i class="fas fa-credit-card me-2"></i>{{ __('Payment Approvals') }}
+                                        </a>
+                                        <div class="dropdown-divider"></div>
+                                        @endif
                                          {{--<a class="dropdown-item" href="{{ route('help') }}">
                                             {{ __('Help & Support') }}
                                         </a> --}}

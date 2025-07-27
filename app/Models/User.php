@@ -49,12 +49,30 @@ class User extends Authenticatable implements MustVerifyEmail
             'password' => 'hashed',
         ];
     }
+
+    // Room Rental System Relationships
+    public function ownedRooms()
+    {
+        return $this->hasMany(Room::class, 'owner_id');
+    }
+
+    public function bookings()
+    {
+        return $this->hasMany(Booking::class);
+    }
+
+    public function recommendations()
+    {
+        return $this->hasMany(AiRecommendation::class);
+    }
+
     // Define the isAdmin method
     public function isAdmin()
     {
         return $this->is_admin === 1; // Assuming `is_admin` is a column in your `users` table
     }
-        public function getIsAdminAttribute()
+    
+    public function getIsAdminAttribute()
     {
         return $this->role === 'admin'; // Assuming 'role' column exists in the users table
     }

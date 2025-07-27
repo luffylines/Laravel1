@@ -42,12 +42,23 @@
         <form method="POST" action="{{ route('contact') }}">
             @csrf
             <div class="mb-3">
-                <label for="name" class="form-label">Your Name</label>
-                <input type="text" class="form-control" id="name" name="name" required value="{{ old('name') }}">
+                <label for="firstname" class="form-label">First Name</label>
+                <input type="text" class="form-control" id="firstname" name="firstname" required value="{{ old('firstname') }}">
+            </div>
+            <div class="mb-3">
+                <label for="lastname" class="form-label">Last Name</label>
+                <input type="text" class="form-control" id="lastname" name="lastname" required value="{{ old('lastname') }}">
             </div>
             <div class="mb-3">
                 <label for="email" class="form-label">Your Email</label>
                 <input type="email" class="form-control" id="email" name="email" required value="{{ old('email') }}">
+            </div>
+            <div class="mb-3">
+                <label for="contact_number" class="form-label">Contact Number</label>
+                <input type="tel" class="form-control" id="contact_number" name="contact_number" required 
+                       value="{{ old('contact_number') }}" placeholder="10-digit phone number (e.g., 9552611726)"
+                       pattern="[0-9]{10}" maxlength="10">
+                <div class="form-text">Enter a 10-digit phone number (e.g., 9552611726)</div>
             </div>
             <div class="mb-3">
                 <label for="message" class="form-label">Your Message</label>

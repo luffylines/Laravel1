@@ -85,53 +85,45 @@
             color: #ffffff;
             border: 1px solid #ff0000;
         }
-        .more-options {
-            margin-top: 20px;
-            cursor: pointer;
-            background-color: #808080; /* Grey background for "More options" button */
+        .alert-success {
+            background-color: #28a745;
             color: #ffffff;
-            border: none;
-            border-radius: 40px;
-            padding: 10px;
-            font-size: 16px;
-        }
-        .more-options:hover {
-            background-color: #a0a0a0;
-        }
-        .dropdown {
-            display: none;
-            list-style: none;
-            padding: 0;
-            margin: 10px 0 0;
-            background-color: #161b22;
-            border: 1px solid #30363d;
-            border-radius: 40px;
-        }
-        .dropdown li {
-            padding: 10px;
-            cursor: pointer;
-            color: #c9d1d9;
-            border-radius: 40px; /* Rounded corners for dropdown items */
-  
-        }
-        .dropdown li:hover {
-            background-color: #b8bbb8;
-            color: #ffffff;
+            border: 1px solid #28a745;
         }
     </style>
     <script>
-        // Function to toggle the dropdown menu
-        function toggleDropdown() {
-            const dropdown = document.getElementById('dropdown');
-            dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
-        }
-        // Automatically hide error messages after 10 seconds
+        // Automatically hide error messages after 8 seconds
         setTimeout(() => {
             const errorMessage = document.querySelector('.alert-danger');
+            const successMessage = document.querySelector('.alert-success');
             if (errorMessage) {
                 errorMessage.style.display = 'none';
             }
-        }, 5000);
+            if (successMessage) {
+                successMessage.style.display = 'none';
+            }
+        }, 8000);
+        // Handle page unload/back button - cancel 2FA session
+        let formSubmitting = false;
+        
+        window.addEventListener('beforeunload', function() {
+            // Only cancel if it's not a form submission
+            if (!formSubmitting) {
+                // Send cancel request when user tries to leave
+                navigator.sendBeacon('{{ route('2fa.cancel') }}', new FormData());
+            }
+        });
+
+        // Handle browser back button
+        window.addEventListener('popstate', function() {
+            window.location.href = '{{ route('login') }}';
+        });
+
+        // Prevent back button from working
+        history.pushState(null, null, location.href);
+        window.onpopstate = function () {
+            history.go(1);
+        };
     </script>
 </head>
 <body>
@@ -141,25 +133,43 @@
         </div>
         <h1>Gmail OTP Verification</h1>
         <p>Enter the OTP sent to your Gmail account below.</p>
-        <!-- Error Message -->
-        @error('one_time_password')
-            <div class="alert alert-danger">{{ $message }}</div>
-        @enderror
+        
+        <!-- Success Message -->
+        @if(session('success'))
+            <div class="alert alert-success">{{ session('success') }}</div>
+        @endif
+
+        <!-- Error Messages -->
+        @if($errors->any())
+            <div class="alert alert-danger">
+                @foreach($errors->all() as $error)
+                    {{ $error }}<br>
+                @endforeach
+            </div>
+        @endif
+
+        <!-- General session error -->
+        @if(session('error'))
+            <div class="alert alert-danger">{{ session('error') }}</div>
+        @endif
+
         <!-- Gmail OTP Form -->
-        <form id="gmail-otp-form" method="POST" action="{{ route('gmail.verify.post') }}">
+        <form id="gmail-otp-form" method="POST" action="{{ route('gmail.verify.post') }}" onsubmit="formSubmitting = true;">
             @csrf
             <input id="gmail_otp" type="text" name="gmail_otp" placeholder="Enter Gmail OTP" required>
             <button type="submit">Verify Gmail OTP</button>
         </form>
 
-        <!-- More Options Dropdown -->
-        <div class="more-options" onclick="toggleDropdown()">
-            More options
-        </div>
+        <!-- Back to Google Authenticator Button -->
+        <form method="GET" action="{{ route('2fa.verify.form') }}" style="margin-top: 10px;">
+            <button type="submit" style="background-color: #007bff; width: 100%;">Use Google Authenticator Instead</button>
+        </form>
 
-        <!-- Dropdown Menu -->
-        <ul id="dropdown" class="dropdown">
-            <li onclick="window.location.href='{{ route('2fa.verify.form') }}';">Two-Factor Authentication</li>
+        <!-- Cancel Button -->
+        <form method="POST" action="{{ route('2fa.cancel') }}" style="margin-top: 10px;">
+            @csrf
+            <button type="submit" style="background-color: #dc3545; width: 100%;">Cancel & Return to Login</button>
+        </form>
         </ul>
     </div>
 </body>

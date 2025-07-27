@@ -130,6 +130,20 @@ public function verify(Request $request)
     // Show the 2FA verification form
     public function showVerifyForm()
     {
+        // Check if there's a 2FA session
+        if (!session('2fa_user_id')) {
+            return redirect()->route('login')->withErrors(['error' => 'Please login first.']);
+        }
+        
+        // Make sure user is not already authenticated
+        if (Auth::check()) {
+            // If already logged in, redirect to appropriate dashboard
+            if (Auth::user()->is_admin) {
+                return redirect()->route('admin.dashboard');
+            }
+            return redirect()->route('home');
+        }
+        
         return view('auth.2fa.login.verify');
     }
 
@@ -140,35 +154,142 @@ public function verify(Request $request)
             'one_time_password' => 'required|digits:6',
         ]);
 
-        $user = Auth::user();
-        $google2fa = app('pragmarx.google2fa');
+        // Get the user ID from session (not from Auth since they're not logged in yet)
+        $userId = session('2fa_user_id');
+        
+        if (!$userId) {
+            return redirect()->route('login')->withErrors(['error' => 'Session expired. Please login again.']);
+        }
+        
+        $user = User::find($userId);
+        
+        if (!$user) {
+            return redirect()->route('login')->withErrors(['error' => 'User not found. Please login again.']);
+        }
 
+        $google2fa = app('pragmarx.google2fa');
         $valid = $google2fa->verifyKey($user->google2fa_secret, $request->one_time_password);
 
         if ($valid) {
-            // Mark the user as verified for this session
-            $request->session()->put('2fa_verified', true);
+            // Clear the 2FA session data
+            session()->forget('2fa_user_id');
+            
+            // NOW log the user in after successful 2FA
+            Auth::login($user);
+            $request->session()->regenerate();
 
-            return redirect()->intended('/'); // Redirect to the intended page
+            // Redirect admin users to admin dashboard, regular users to home
+            if ($user->is_admin) {
+                return redirect()->intended(route('admin.dashboard'))->with('success', 'Successfully logged in with 2FA!');
+            } else {
+                return redirect()->intended(route('home'))->with('success', 'Successfully logged in with 2FA!');
+            }
         } else {
             return back()->withErrors(['one_time_password' => 'Invalid code.']);
         }
     }
 
+    // Handle 2FA cancellation/logout
+    public function cancel2FA(Request $request)
+    {
+        // Clear the 2FA session
+        session()->forget('2fa_user_id');
+        
+        return redirect()->route('login')->with('info', 'Two-factor authentication cancelled. Please login again.');
+    }
+
     public function sendGmailOtp(Request $request)
     {
-        $user = Auth::user();
+        // Debug logging
+        \Illuminate\Support\Facades\Log::info('sendGmailOtp method called', [
+            'is_ajax' => $request->ajax(),
+            'session_all' => session()->all(),
+            'session_2fa_user_id' => session('2fa_user_id'),
+            'request_url' => $request->url(),
+            'request_method' => $request->method()
+        ]);
+        
+        // Get the user ID from session (not from Auth since they're not logged in yet)
+        $userId = session('2fa_user_id');
+        
+        \Illuminate\Support\Facades\Log::info('2FA User ID from session: ' . ($userId ?? 'null'));
+        
+        if (!$userId) {
+            \Illuminate\Support\Facades\Log::error('No 2FA user ID in session - redirecting to login');
+            if ($request->ajax()) {
+                return response()->json(['success' => false, 'error' => 'Session expired. Please login again.']);
+            }
+            return redirect()->route('login')->withErrors(['error' => 'Session expired. Please login again.']);
+        }
+        
+        $user = User::find($userId);
+        
+        if (!$user) {
+            \Illuminate\Support\Facades\Log::error('User not found with ID: ' . $userId);
+            if ($request->ajax()) {
+                return response()->json(['success' => false, 'error' => 'User not found. Please login again.']);
+            }
+            return redirect()->route('login')->withErrors(['error' => 'User not found. Please login again.']);
+        }
+
+        \Illuminate\Support\Facades\Log::info('User found', [
+            'user_id' => $user->id,
+            'user_email' => $user->email
+        ]);
 
         // Generate a random 6-digit OTP
         $otp = rand(100000, 999999);
 
-        // Save the OTP in the session or database (optional)
+        // Save the OTP in the session
         $request->session()->put('gmail_otp', $otp);
+        
+        \Illuminate\Support\Facades\Log::info('OTP generated and saved to session', [
+            'otp' => $otp,
+            'session_gmail_otp' => session('gmail_otp')
+        ]);
 
-        // Send the OTP to the user's email
-        Mail::to($user->email)->send(new SendOtpMail($otp));
-
-        return redirect()->route('gmail.verify')->with('success', 'OTP has been sent to your email.');
+        try {
+            // Send OTP via email
+            Mail::to($user->email)->send(new SendOtpMail($otp));
+            
+            \Illuminate\Support\Facades\Log::info('Gmail OTP sent successfully', [
+                'user_email' => $user->email,
+                'otp' => $otp
+            ]);
+            
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => true, 
+                    'message' => 'OTP has been sent to your email.'
+                ]);
+            }
+            
+            // Add debug logging before redirect
+            \Illuminate\Support\Facades\Log::info('Redirecting to Gmail OTP form. Session user ID: ' . session('2fa_user_id'));
+            
+            // Redirect to the separate Gmail verify page
+            return redirect()->route('gmail.verify')->with('success', 'OTP has been sent to your email. Please check your inbox.');
+        } catch (\Exception $e) {
+            // Log detailed error information
+            \Illuminate\Support\Facades\Log::error('Failed to send Gmail OTP', [
+                'error_message' => $e->getMessage(),
+                'error_file' => $e->getFile(),
+                'error_line' => $e->getLine(),
+                'error_trace' => $e->getTraceAsString(),
+                'user_email' => $user->email ?? 'unknown',
+                'otp' => $otp ?? 'not_generated'
+            ]);
+            
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => false, 
+                    'error' => 'Failed to send OTP: ' . $e->getMessage()
+                ]);
+            }
+            
+            // If email fails, go back to 2FA page with error
+            return redirect()->route('2fa.verify.form')->withErrors(['error' => 'Failed to send OTP: ' . $e->getMessage()]);
+        }
     }
     public function verifyGmailOtp(Request $request)
     {
@@ -176,12 +297,36 @@ public function verify(Request $request)
             'gmail_otp' => 'required|digits:6',
         ]);
 
+        // Get the user ID from session (not from Auth since they're not logged in yet)
+        $userId = session('2fa_user_id');
+        
+        if (!$userId) {
+            return redirect()->route('login')->withErrors(['error' => 'Session expired. Please login again.']);
+        }
+        
+        $user = User::find($userId);
+        
+        if (!$user) {
+            return redirect()->route('login')->withErrors(['error' => 'User not found. Please login again.']);
+        }
+
         $userOtp = $request->session()->get('gmail_otp'); // Retrieve OTP from session
 
         if ($request->gmail_otp == $userOtp) {
-            // Mark the user as verified for this session
-            $request->session()->forget('gmail_otp'); // Clear the OTP from session
-            return redirect()->intended('/')->with('success', 'Gmail OTP verified successfully.');
+            // Clear both OTP and 2FA session data
+            $request->session()->forget('gmail_otp');
+            $request->session()->forget('2fa_user_id');
+            
+            // NOW log the user in after successful Gmail OTP verification
+            Auth::login($user);
+            $request->session()->regenerate();
+            
+            // Redirect admin users to admin dashboard, regular users to home
+            if ($user->is_admin) {
+                return redirect()->intended(route('admin.dashboard'))->with('success', 'Gmail OTP verified successfully.');
+            } else {
+                return redirect()->intended(route('home'))->with('success', 'Gmail OTP verified successfully.');
+            }
         } else {
             return back()->withErrors(['gmail_otp' => 'Invalid Gmail OTP.']);
         }
@@ -189,6 +334,28 @@ public function verify(Request $request)
         // Show the Gmail OTP verification form
         public function showGmailVerifyForm()
         {
+            // Debug logging
+            \Illuminate\Support\Facades\Log::info('showGmailVerifyForm called', [
+                'session_2fa_user_id' => session('2fa_user_id'),
+                'session_all' => session()->all(),
+                'auth_check' => Auth::check()
+            ]);
+            
+            // Check if there's a 2FA session
+            if (!session('2fa_user_id')) {
+                \Illuminate\Support\Facades\Log::error('No 2FA session found in showGmailVerifyForm - redirecting to login');
+                return redirect()->route('login')->withErrors(['error' => 'Please login first.']);
+            }
+            
+            // Make sure user is not already authenticated
+            if (Auth::check()) {
+                // If already logged in, redirect to appropriate dashboard
+                if (Auth::user()->is_admin) {
+                    return redirect()->route('admin.dashboard');
+                }
+                return redirect()->route('home');
+            }
+            
             return view('auth.gmail_otp.verify');
         }
 }

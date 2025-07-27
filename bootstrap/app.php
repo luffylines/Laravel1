@@ -11,7 +11,13 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        $middleware->alias([
+            'is_admin' => \App\Http\Middleware\IsAdmin::class,
+            'set_timezone' => \App\Http\Middleware\SetUserTimezone::class,
+            '2fa' => \App\Http\Middleware\TwoFactorMiddleware::class,
+            'redirect_admin' => \App\Http\Middleware\RedirectAdminToDashboard::class,
+            'require_2fa_session' => \App\Http\Middleware\Require2FASession::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

@@ -6,6 +6,10 @@ use App\Models\User;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use PHPMailer\PHPMailer\PHPMailer;
@@ -24,6 +28,7 @@ class PHPMailerControler extends Controller
         'firstname' => 'required|string|max:255',
         'lastname' => 'required|string|max:255',
         'email' => 'required|email|max:255',
+        'contact_number' => 'required|digits:10',
         'message' => 'required|string',
     ]);
 
@@ -38,8 +43,14 @@ class PHPMailerControler extends Controller
         $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
         $mail->Port = 465;
 
-        $mail->setFrom($validated['email'], $validated['name']);
-        $mail->addAddress('chba.aring.sjc@phinmaed.com'); // receiver
+        $fullName = $validated['firstname'] . ' ' . $validated['lastname'];
+        
+        // Set the user's email as sender (for reply purposes)
+        $mail->setFrom($validated['email'], $fullName);
+        
+        // Send email ONLY to admin - NOT to the user who filled out the form
+        $mail->addAddress('chba.aring.sjc@phinmaed.com'); // Admin email receiver
+        
         $mail->isHTML(true);
         $mail->Subject = 'Contact Form Submission';
 
@@ -47,8 +58,10 @@ class PHPMailerControler extends Controller
             <html>
             <body>
                 <h3>Contact Form Submission</h3>
-                <p><strong>Name:</strong> {$validated['name']}</p>
+                <p><strong>First Name:</strong> {$validated['firstname']}</p>
+                <p><strong>Last Name:</strong> {$validated['lastname']}</p>
                 <p><strong>Email:</strong> {$validated['email']}</p>
+                <p><strong>Contact Number:</strong> {$validated['contact_number']}</p>
                 <p><strong>Message:</strong><br>{$validated['message']}</p>
             </body>
             </html>
@@ -56,12 +69,55 @@ class PHPMailerControler extends Controller
 
         $mail->send();
 
+        // Send SMS notification to admin
+        $this->sendSMSNotification($validated);
+
         return back()->with('success', 'Your message has been sent!');
     } catch (Exception $e) {
         Log::error('Contact mail error: ' . $e->getMessage());
         return back()->withErrors(['error' => 'Message could not be sent.'])->withInput();
     }
 }
+
+    /**
+     * Send SMS notification to admin when contact form is submitted
+     */
+    private function sendSMSNotification($contactData)
+    {
+        try {
+            $adminNumber = '9278856264'; // Your admin number
+            $fullName = $contactData['firstname'] . ' ' . $contactData['lastname'];
+            
+            // Create SMS message
+            $smsMessage = "New Contact Form Submission!\n";
+            $smsMessage .= "Name: {$fullName}\n";
+            $smsMessage .= "Email: {$contactData['email']}\n";
+            $smsMessage .= "Phone: {$contactData['contact_number']}\n";
+            $smsMessage .= "Message: " . substr($contactData['message'], 0, 100); // Limit message length
+            
+            // Send SMS using the Free SMS API
+            $response = Http::get('https://free-sms-api.svxtract.workers.dev/', [
+                'number' => $adminNumber,
+                'message' => $smsMessage
+            ]);
+
+            if ($response->successful()) {
+                Log::info('SMS notification sent successfully to admin', [
+                    'admin_number' => $adminNumber,
+                    'contact_name' => $fullName
+                ]);
+            } else {
+                Log::warning('SMS notification failed', [
+                    'response_status' => $response->status(),
+                    'response_body' => $response->body()
+                ]);
+            }
+        } catch (\Exception $e) {
+            Log::error('SMS notification error: ' . $e->getMessage(), [
+                'contact_data' => $contactData
+            ]);
+        }
+    }
 
     public function getlogin()
     {
@@ -75,13 +131,28 @@ class PHPMailerControler extends Controller
             'password' => 'required|string',
         ]);
 
-        $user = User::where('email', $credentials['email'])->first();
+        // Find user by email (decrypt stored email)
+        $user = User::all()->first(function ($u) use ($credentials) {
+            try {
+                return Crypt::decryptString($u->email) === $credentials['email'];
+            } catch (\Exception $e) {
+                return false;
+            }
+        });
 
-        if ($user && Hash::check($credentials['password'], $user->password)) {
-            return redirect()->route('dashboard')->with('success', 'Login successful!');
+        if (!$user || !Hash::check($credentials['password'], $user->password)) {
+            return back()->withErrors(['email' => 'Invalid credentials.'])->withInput();
         }
 
-        return back()->withErrors(['email' => 'Invalid credentials.'])->withInput();
+        // Log in the user
+        Auth::login($user, $request->filled('remember'));
+        
+        // Redirect based on user role
+        if ($user->is_admin) {
+            return redirect()->route('admin.dashboard')->with('success', 'Welcome back, Admin!');
+        }
+        
+        return redirect()->route('dashboard')->with('success', 'Login successful!');
     }
 
     public function getsignup()

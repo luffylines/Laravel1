@@ -1,13 +1,22 @@
-{{-- filepath: resources/views/admin/users/index.blade.php --}}
-@extends('layouts.app')
-
-@section('content')
-<div class="container">
-    <h1 class="mb-4">Manage Users</h1>
-    <a href="{{ route('admin.users.create') }}" class="btn btn-primary mb-3">Add New User</a>
-    <table class="table">
-        <thead>
-            <tr>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Users - Admin Panel</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #f8fafc;
+            color: #374151;
+            min-height: 100vh;
+        }
                 <th>firstname</th>
                 <th>lastname</th>
                 <th>Email</th>
